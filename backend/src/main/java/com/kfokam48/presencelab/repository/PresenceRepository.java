@@ -16,4 +16,8 @@ public interface PresenceRepository extends JpaRepository<Presence, Long> {
     /** Candidats relecteurs (RG11) : les étudiants présents à la session. */
     @Query("select p.etudiant from Presence p where p.session.id = :sessionId")
     List<Etudiant> etudiantsPresents(@Param("sessionId") Long sessionId);
+
+    /** Tableau (EF8) : nombre de présences par étudiant d'une promotion — [etudiantId, nombre]. */
+    @Query("select p.etudiant.id, count(p) from Presence p where p.etudiant.promotion.id = :promotionId group by p.etudiant.id")
+    List<Object[]> compterParEtudiant(@Param("promotionId") Long promotionId);
 }
