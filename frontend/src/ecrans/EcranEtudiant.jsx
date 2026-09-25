@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { api } from '../api/client'
 import { ChoixEtudiant } from '../composants/Choix'
-import { MessageErreur, MessageSucces } from '../composants/Etat'
-import { useAction } from '../hooks/useRequete'
+import { Chargement, MessageErreur, MessageSucces } from '../composants/Etat'
+import { useAction, useRequete } from '../hooks/useRequete'
 
 /** Écran étudiant (F2) : marquer sa présence, déposer son exercice. */
 export default function EcranEtudiant() {
@@ -13,7 +13,8 @@ export default function EcranEtudiant() {
     <>
       <h2>Espace étudiant</h2>
       <ChoixEtudiant promotionId={promotionId} onPromotion={setPromotionId} etudiant={etudiant} onEtudiant={setEtudiant} />
-      {etudiant && <MarquerPresence key={etudiant.id} etudiant={etudiant} />}
+      {etudiant && <MarquerPresence key={`p-${etudiant.id}`} etudiant={etudiant} />}
+      {etudiant && <DeposerExercice key={`d-${etudiant.id}`} etudiant={etudiant} promotionId={promotionId} />}
     </>
   )
 }
@@ -48,6 +49,47 @@ function MarquerPresence({ etudiant }) {
       </form>
       <MessageErreur erreur={marquage.erreur} />
       <MessageSucces>{marquage.resultat && `Présence enregistrée, ${etudiant.nom}.`}</MessageSucces>
+    </section>
+  )
+}
+
+function DeposerExercice({ etudiant, promotionId }) {
+  const [sessionId, setSessionId] = useState('')
+  const [lien, setLien] = useState('')
+  const sessions = useRequete(`sessions-${promotionId}`, () => api.sessions(promotionId))
+  const depot = useAction(api.deposerExercice)
+  const ouvertes = sessions.donnees?.filter((s) => !s.cloturee) ?? []
+
+  async function envoyer(evenement) {
+    evenement.preventDefault()
+    const exercice = await depot.executer(Number(sessionId), etudiant.id, lien)
+    if (exercice) setLien('')
+  }
+
+  return (
+    <section>
+      <h3>Déposer mon exercice</h3>
+      {sessions.chargement && <Chargement texte="Chargement des sessions…" />}
+      <MessageErreur erreur={sessions.erreur} />
+      {sessions.donnees && ouvertes.length === 0 && <p className="vide">Aucune session ouverte aux dépôts.</p>}
+      {ouvertes.length > 0 && (
+        <form onSubmit={envoyer}>
+          <label htmlFor="session">Session</label>
+          <select id="session" value={sessionId} onChange={(e) => setSessionId(e.target.value)}>
+            <option value="">— choisir —</option>
+            {ouvertes.map((s) => (
+              <option key={s.id} value={s.id}>{s.titre}</option>
+            ))}
+          </select>
+          <label htmlFor="lien">Lien de l'exercice</label>
+          <input id="lien" type="text" inputMode="url" value={lien} onChange={(e) => setLien(e.target.value)} placeholder="https://github.com/…" />
+          <button className="principal" disabled={depot.enCours || !sessionId || !lien}>
+            {depot.enCours ? 'Envoi…' : 'Déposer'}
+          </button>
+        </form>
+      )}
+      <MessageErreur erreur={depot.erreur} />
+      <MessageSucces>{depot.resultat && `Exercice déposé — statut : ${depot.resultat.statut}.`}</MessageSucces>
     </section>
   )
 }
