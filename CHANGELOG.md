@@ -2,6 +2,11 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Chaque entrée renvoie à son issue GitHub.
 
+## [1.0.1] — 2026-09-25
+
+### Modifié
+- Interface modernisée, en CSS uniquement : cartes, onglets, badges d'état, mode sombre automatique, meilleure lisibilité sur téléphone (ENF1). Aucune logique ni aucun appel API modifié (#27).
+
 ## [1.0.0] — 2026-09-25
 
 Version finale, après l'étape 3 (retour du client : un bug et un changement de besoin).
