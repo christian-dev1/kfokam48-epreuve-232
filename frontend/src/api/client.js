@@ -47,4 +47,7 @@ export const api = {
   // Sessions (EF1)
   ouvrirSession: (titre, promotionId) => requete('/api/sessions', { methode: 'POST', corps: { titre, promotionId } }),
   sessions: (promotionId) => requete(`/api/sessions?promotionId=${promotionId}`),
+
+  // Présences (EF3)
+  marquerPresence: (code, etudiantId) => requete('/api/presences', { methode: 'POST', corps: { code, etudiantId } }),
 }
