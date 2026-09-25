@@ -44,3 +44,11 @@
 **Bloqué :** environ 20 min, surtout pour libérer les ports 8080 et 5173, occupés par d'autres processus locaux.
 
 **IA :** je lui ai fait rédiger le CHANGELOG et le README. Vérifié en comparant chaque ligne du CHANGELOG aux PR fusionnées, et en exécutant les commandes du README depuis un clone vierge.
+
+---
+
+## Étape 5 — Soumission
+
+**Fait :** dépôt public vérifié en navigation privée, trois jalons présents et dans l'ordre, hash du dernier commit relevé, SOUMISSION.md téléversé.
+
+**Ce que je referais autrement avec une journée de plus :** poser le jalon d'analyse seulement une fois l'analyse terminée ; écrire dès la v0.1 un test de concurrence sur la présence ; tester les migrations sur H2 et PostgreSQL avant de les pousser ; implémenter EF9 à EF13 ; ajouter une authentification légère pour l'écran formateur.
