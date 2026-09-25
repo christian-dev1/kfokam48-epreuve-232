@@ -20,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.kfokam48.presencelab.dto.PresenceDto;
@@ -68,6 +69,7 @@ class PresenceServiceTest {
         when(etudiants.findById(10L)).thenReturn(Optional.of(alice));
         when(sessions.findByCode(CODE)).thenReturn(Optional.of(session));
         when(presences.save(any(Presence.class))).thenAnswer(appel -> appel.getArgument(0));
+        when(presences.saveAndFlush(any(Presence.class))).thenAnswer(appel -> appel.getArgument(0));
     }
 
     private PresenceService serviceA(Instant maintenant) {
@@ -124,5 +126,22 @@ class PresenceServiceTest {
         PresenceDto presence = serviceA(OUVERTURE.plusSeconds(30)).marquerPresence("  k7p2qx ", 10L);
 
         assertThat(presence.source()).isEqualTo(SourcePresence.ETUDIANT);
+    }
+
+    /**
+     * Bug #23 — deux requêtes arrivent « presque en même temps » : toutes deux passent le contrôle
+     * existsBy… avant que l'une n'ait écrit. La contrainte uk_presence_session_etudiant rejette la seconde.
+     * Attendu : un 409 DEJA_PRESENT clair, pas une erreur générique ni une présence perdue en silence.
+     */
+    @Test
+    void BUG_uneCourseEntreDeuxRequetesDonneDejaPresentEtNonUneErreurGenerique() {
+        when(presences.existsBySessionIdAndEtudiantId(100L, 10L)).thenReturn(false); // la course : le contrôle passe
+        when(presences.saveAndFlush(any(Presence.class)))
+                .thenThrow(new DataIntegrityViolationException("uk_presence_session_etudiant"));
+        when(presences.save(any(Presence.class)))
+                .thenThrow(new DataIntegrityViolationException("uk_presence_session_etudiant"));
+
+        assertThatThrownBy(() -> serviceA(OUVERTURE.plusSeconds(30)).marquerPresence(CODE, 10L))
+                .isInstanceOf(DejaPresentException.class);
     }
 }
