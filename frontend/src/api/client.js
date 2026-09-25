@@ -50,4 +50,8 @@ export const api = {
 
   // Présences (EF3)
   marquerPresence: (code, etudiantId) => requete('/api/presences', { methode: 'POST', corps: { code, etudiantId } }),
+
+  // Exercices (EF4)
+  deposerExercice: (sessionId, etudiantId, lien) =>
+    requete('/api/exercices', { methode: 'POST', corps: { sessionId, etudiantId, lien } }),
 }
