@@ -1,0 +1,24 @@
+/* Styles minimaux : le rendu n'est pas noté, seule l'utilisabilité sur téléphone compte (ENF1). */
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, sans-serif; background: #f5f6f8; color: #1d2330; }
+.app { max-width: 960px; margin: 0 auto; padding: 12px; }
+header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+h1 { font-size: 1.4rem; margin: 8px 0; }
+h2 { font-size: 1.15rem; margin: 20px 0 8px; }
+nav { display: flex; gap: 6px; flex-wrap: wrap; }
+button { font: inherit; padding: 10px 14px; border: 1px solid #3056d3; border-radius: 8px; background: #fff; color: #3056d3; cursor: pointer; min-height: 44px; }
+button.actif, button.principal { background: #3056d3; color: #fff; }
+button:disabled { opacity: .6; cursor: wait; }
+section { background: #fff; border-radius: 10px; padding: 12px 16px; margin: 12px 0; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+label { display: block; margin: 10px 0 4px; font-weight: 600; }
+input, select, textarea { font: inherit; width: 100%; padding: 10px; border: 1px solid #c7ccd6; border-radius: 8px; min-height: 44px; }
+form button { margin-top: 12px; }
+.code-presence { font-size: 2.6rem; letter-spacing: .3rem; font-weight: 700; text-align: center; margin: 8px 0; }
+.erreur { color: #b42318; background: #fef3f2; padding: 8px 10px; border-radius: 8px; }
+.succes { color: #067647; background: #ecfdf3; padding: 8px 10px; border-radius: 8px; }
+.chargement, .vide { color: #667085; }
+.table-defilante { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+th, td { text-align: left; padding: 8px; border-bottom: 1px solid #e4e7ec; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: .8rem; background: #eef2ff; color: #3056d3; }
+.badge.attente { background: #fffaeb; color: #b54708; }
