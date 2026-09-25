@@ -43,4 +43,8 @@ export const api = {
   // Référentiel (EF2, H1)
   promotions: () => requete('/api/promotions'),
   etudiants: (promotionId) => requete(`/api/promotions/${promotionId}/etudiants`),
+
+  // Sessions (EF1)
+  ouvrirSession: (titre, promotionId) => requete('/api/sessions', { methode: 'POST', corps: { titre, promotionId } }),
+  sessions: (promotionId) => requete(`/api/sessions?promotionId=${promotionId}`),
 }
