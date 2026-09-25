@@ -17,10 +17,17 @@ public interface RelectureRepository extends JpaRepository<Relecture, Long> {
     @Query("select r from Relecture r join fetch r.exercice x join fetch x.session where r.relecteur.id = :relecteurId")
     List<Relecture> assigneesA(@Param("relecteurId") Long relecteurId);
 
-    /** Tableau (RG16) : moyenne des notes RENDUES reçues par chaque auteur — [etudiantId, moyenne]. */
-    @Query("select x.etudiant.id, avg(r.note) from Relecture r join r.exercice x"
-            + " where x.etudiant.promotion.id = :promotionId and r.rendueAt is not null group by x.etudiant.id")
-    List<Object[]> moyenneParAuteur(@Param("promotionId") Long promotionId);
+    /** Nombre de notes rendues sur un exercice (D4 v2 : PARTIELLEMENT_RELU ou RELU). */
+    long countByExerciceIdAndRendueAtIsNotNull(Long exerciceId);
+
+    /**
+     * Tableau v2 (RG19) : par exercice d'un auteur, moyenne et nombre des notes rendues
+     * — [etudiantId, exerciceId, moyenne, nombreDeNotes].
+     */
+    @Query("select x.etudiant.id, x.id, avg(r.note), count(r) from Relecture r join r.exercice x"
+            + " where x.etudiant.promotion.id = :promotionId and r.rendueAt is not null"
+            + " group by x.etudiant.id, x.id")
+    List<Object[]> notesParExercice(@Param("promotionId") Long promotionId);
 
     /** Tableau (RG17) : relectures que chaque étudiant doit encore rendre — [relecteurId, nombre]. */
     @Query("select r.relecteur.id, count(r) from Relecture r"

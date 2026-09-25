@@ -58,7 +58,9 @@ public class RelectureService {
             throw MetierException.conflit("RELECTURE_DEJA_RENDUE", "Cette relecture a déjà été rendue : elle est définitive.");
         }
         relecture.rendre(requete.note(), requete.commentaire().trim(), Instant.now(horloge));
-        relecture.getExercice().marquerRelu(); // D4
+        // D4 v2 : première note → PARTIELLEMENT_RELU (provisoire, RG20), seconde → RELU (RG19)
+        long notesRendues = relectures.countByExerciceIdAndRendueAtIsNotNull(relecture.getExercice().getId());
+        relecture.getExercice().enregistrerNotesRendues(notesRendues);
         return RelectureDto.depuis(relecture);
     }
 }
