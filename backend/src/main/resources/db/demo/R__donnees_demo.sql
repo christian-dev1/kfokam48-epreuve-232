@@ -59,24 +59,37 @@ FROM (VALUES ('DEMO1A', 'Alice Mbarga', 'https://github.com/alice-mbarga/tp-git'
              ('DEMO1A', 'Carine Ngo', 'https://github.com/carine-ngo/tp-git', 'RELU'),
              ('DEMO1A', 'David Essomba', 'https://github.com/david-essomba/tp-git', 'EN_ATTENTE_RELECTURE'),
              ('DEMO2B', 'Alice Mbarga', 'https://github.com/alice-mbarga/api-rest', 'EN_ATTENTE_RELECTURE'),
-             ('DEMO2B', 'Bruno Tchoupo', 'https://github.com/bruno-tchoupo/api-rest', 'RELU')) AS v(code, nom, lien, statut)
+             ('DEMO2B', 'Bruno Tchoupo', 'https://github.com/bruno-tchoupo/api-rest', 'PARTIELLEMENT_RELU')) AS v(code, nom, lien, statut)
 JOIN session_cours s ON s.code = v.code
 JOIN etudiant e ON e.nom = v.nom AND e.promotion_id = s.promotion_id
 WHERE NOT EXISTS (SELECT 1 FROM exercice x WHERE x.session_id = s.id AND x.etudiant_id = e.id);
 
--- Relectures (note NULL = pas encore rendue, visible « en attente » : Q11)
+-- Relectures : deux pairs différents par exercice depuis V2 (RG10 v2). Note NULL = pas encore rendue (Q11).
 INSERT INTO relecture (exercice_id, relecteur_id, note, commentaire, assignee_at, rendue_at)
 SELECT x.id, r.id, v.note, v.commentaire, x.depose_at,
        CASE WHEN v.note IS NULL THEN NULL ELSE x.depose_at + INTERVAL '1 hour' END
 FROM (VALUES ('DEMO1A', 'Alice Mbarga', 'Bruno Tchoupo', 15, 'Historique propre, messages de commit clairs.'),
+             ('DEMO1A', 'Alice Mbarga', 'Estelle Fotso', 13, 'Bon travail, quelques commits trop gros.'),
              ('DEMO1A', 'Bruno Tchoupo', 'Carine Ngo', 12, 'Branches correctes, mais le README est incomplet.'),
+             ('DEMO1A', 'Bruno Tchoupo', 'David Essomba', NULL, NULL),
              ('DEMO1A', 'Carine Ngo', 'David Essomba', 17, 'Très bon travail, PR bien décrites.'),
+             ('DEMO1A', 'Carine Ngo', 'Alice Mbarga', 16, 'Clair et bien testé.'),
              ('DEMO1A', 'David Essomba', 'Estelle Fotso', NULL, NULL),
+             ('DEMO1A', 'David Essomba', 'Carine Ngo', NULL, NULL),
              ('DEMO2B', 'Alice Mbarga', 'Carine Ngo', NULL, NULL),
-             ('DEMO2B', 'Bruno Tchoupo', 'Estelle Fotso', 14, 'Endpoints conformes, gestion d''erreurs à compléter.'))
+             ('DEMO2B', 'Alice Mbarga', 'Bruno Tchoupo', NULL, NULL),
+             ('DEMO2B', 'Bruno Tchoupo', 'Estelle Fotso', 14, 'Endpoints conformes, gestion d''erreurs à compléter.'),
+             ('DEMO2B', 'Bruno Tchoupo', 'Alice Mbarga', NULL, NULL))
        AS v(code, auteur, relecteur, note, commentaire)
 JOIN session_cours s ON s.code = v.code
 JOIN etudiant a ON a.nom = v.auteur AND a.promotion_id = s.promotion_id
 JOIN exercice x ON x.session_id = s.id AND x.etudiant_id = a.id
 JOIN etudiant r ON r.nom = v.relecteur AND r.promotion_id = s.promotion_id
-WHERE NOT EXISTS (SELECT 1 FROM relecture l WHERE l.exercice_id = x.id);
+WHERE NOT EXISTS (SELECT 1 FROM relecture l WHERE l.exercice_id = x.id AND l.relecteur_id = r.id);
+
+-- Statuts recalculés à partir des relectures (idempotent) : 2 notes = RELU, 1 = PARTIELLEMENT_RELU (RG20)
+UPDATE exercice SET statut = CASE
+    WHEN (SELECT COUNT(*) FROM relecture r WHERE r.exercice_id = exercice.id AND r.rendue_at IS NOT NULL) >= 2 THEN 'RELU'
+    WHEN (SELECT COUNT(*) FROM relecture r WHERE r.exercice_id = exercice.id AND r.rendue_at IS NOT NULL) = 1 THEN 'PARTIELLEMENT_RELU'
+    WHEN (SELECT COUNT(*) FROM relecture r WHERE r.exercice_id = exercice.id) > 0 THEN 'EN_ATTENTE_RELECTURE'
+    ELSE 'DEPOSE' END;
