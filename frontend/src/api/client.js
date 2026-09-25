@@ -54,4 +54,9 @@ export const api = {
   // Exercices (EF4)
   deposerExercice: (sessionId, etudiantId, lien) =>
     requete('/api/exercices', { methode: 'POST', corps: { sessionId, etudiantId, lien } }),
+
+  // Relectures (EF6, EF7)
+  relectures: (relecteurId) => requete(`/api/relectures?relecteurId=${relecteurId}`),
+  rendreRelecture: (id, note, commentaire, relecteurId) =>
+    requete(`/api/relectures/${id}`, { methode: 'POST', corps: { note, commentaire, relecteurId } }),
 }
