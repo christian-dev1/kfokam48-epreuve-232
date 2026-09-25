@@ -2,7 +2,7 @@
 
 Ce diagramme correspond **exactement** aux migrations Flyway de `backend/src/main/resources/db/migration/` : mêmes tables, colonnes, types, contraintes. Toute évolution du schéma passe par une nouvelle migration **et** par une mise à jour de ce fichier dans le même commit.
 
-Migrations décrites : `V1__schema_initial.sql`
+Migrations décrites : `V1__schema_initial.sql`, `V2__deux_relecteurs.sql` (changement de l'étape 3)
 
 ```mermaid
 erDiagram
@@ -12,7 +12,7 @@ erDiagram
     ETUDIANT ||--o{ PRESENCE : "est présent (RG3 : 1 par session)"
     SESSION_COURS ||--o{ EXERCICE : "reçoit"
     ETUDIANT ||--o{ EXERCICE : "dépose (RG6 : 1 par session)"
-    EXERCICE ||--o| RELECTURE : "est relu par (RG10 : au plus 1)"
+    EXERCICE ||--o{ RELECTURE : "est relu par (RG10 v2 : 2 pairs differents)"
     ETUDIANT ||--o{ RELECTURE : "relit (relecteur)"
 
     PROMOTION {
@@ -45,12 +45,12 @@ erDiagram
         bigint session_id FK "NOT NULL, UK(session_id, etudiant_id)"
         bigint etudiant_id FK "NOT NULL (auteur)"
         varchar_500 lien "NOT NULL (RG7)"
-        varchar_30 statut "DEPOSE | EN_ATTENTE_RELECTURE | RELU"
+        varchar_30 statut "DEPOSE | EN_ATTENTE_RELECTURE | PARTIELLEMENT_RELU | RELU"
         timestamptz depose_at "NOT NULL"
     }
     RELECTURE {
         bigint id PK
-        bigint exercice_id FK "NOT NULL, UK (RG10)"
+        bigint exercice_id FK "NOT NULL, UK(exercice_id, relecteur_id) (V2)"
         bigint relecteur_id FK "NOT NULL, jamais l'auteur (RG12)"
         integer note "NULL tant que non rendue, CHECK 0..20 (RG13)"
         varchar_1000 commentaire "NULL tant que non rendue"
@@ -69,8 +69,8 @@ erDiagram
 | `uk_presence_session_etudiant` UNIQUE (session_id, etudiant_id) | presence | RG3 |
 | `ck_presence_source` CHECK source IN ('ETUDIANT','FORMATEUR') | presence | RG4 |
 | `uk_exercice_session_etudiant` UNIQUE (session_id, etudiant_id) | exercice | RG6 |
-| `ck_exercice_statut` CHECK statut IN ('DEPOSE','EN_ATTENTE_RELECTURE','RELU') | exercice | D4 |
-| `uk_relecture_exercice` UNIQUE (exercice_id) | relecture | RG10 |
+| `ck_exercice_statut` CHECK statut IN ('DEPOSE','EN_ATTENTE_RELECTURE','PARTIELLEMENT_RELU','RELU') — recréée par V2 | exercice | D4, RG20 |
+| ~~`uk_relecture_exercice` UNIQUE (exercice_id)~~ supprimée par V2 → `uk_relecture_exercice_relecteur` UNIQUE (exercice_id, relecteur_id) : deux relecteurs, jamais deux fois le même | relecture | RG10 v2 |
 | `ck_relecture_note` CHECK note IS NULL OR note BETWEEN 0 AND 20 | relecture | RG13 |
 
 Le **relecteur** n'a pas de table propre : c'est un `ETUDIANT` référencé par `relecture.relecteur_id` (cahier des charges, section 2). Le **formateur** n'est pas stocké, puisqu'il n'y a pas d'authentification (Q1, section 3).

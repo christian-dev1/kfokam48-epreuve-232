@@ -1,7 +1,7 @@
 # Cahier des charges — PresenceLab KFOKAM48
 
 **Auteur :** Christian Noutchom · matricule 232
-**Version :** 1 · **Date :** 25/09/2026
+**Version :** 2 (changement de l'étape 3 : deux relecteurs) · **Date :** 25/09/2026
 **Frontend choisi :** React (Vite), parce que trois écrans simples n'ont besoin ni d'un framework complet ni de rendu serveur, et que le build Vite est rapide et sans configuration.
 
 ---
@@ -34,13 +34,15 @@ Le **Système** est un acteur secondaire : il génère le code de présence et t
 - Sélection de son nom dans une liste (pas d'authentification, voir Q1)
 - Présence par code, et présence ajoutée par le formateur (marquée `FORMATEUR`)
 - Dépôt d'un lien d'exercice par session, avec remplacement possible
-- Assignation automatique et aléatoire d'un relecteur parmi les présents
+- Assignation automatique et aléatoire de **deux relecteurs différents** parmi les présents (v2, étape 3)
+- Note retenue = moyenne des deux notes ; note **provisoire** tant qu'une seule est rendue (v2)
 - Relecture : note entière sur 20 et commentaire
 - Tableau du formateur par promotion
 - Clôture d'une session par le formateur
 - Données de démonstration chargées au démarrage
 
 **Explicitement exclu :**
+- **Sacrifié en v2 pour absorber le changement « deux relecteurs » (Must tardif) :** EF12 (blocage après 5 codes erronés, Should) et EF13 (remplacement du lien, Could). Ils ne touchent ni à la note ni au tableau, que le client juge prioritaires. EF9, EF10 et EF11 ne sont faits que s'il reste du temps
 - Authentification, mots de passe, gestion des droits (Q1). N'importe qui peut ouvrir l'écran formateur : c'est un risque accepté pour cette version.
 - Gestion (création, modification, suppression) des promotions et des étudiants : ils sont fournis par les données de démonstration
 - Modification d'une note après envoi (voir la contradiction Q10/Q15, section 7)
@@ -57,10 +59,10 @@ Le **Système** est un acteur secondaire : il génère le code de présence et t
 | EF2 | L'étudiant s'identifie en choisissant son nom dans la liste de sa promotion | Quand je choisis une promotion, alors la liste de ses étudiants s'affiche et je peux sélectionner mon nom sans mot de passe | Must |
 | EF3 | L'étudiant marque sa présence avec le code | Quand je saisis un code valide et non expiré, alors ma présence (source `ETUDIANT`) apparaît dans le tableau · code inconnu → `400 CODE_INCONNU` · code expiré ou session clôturée → `410 CODE_EXPIRE` · déjà présent → `409 DEJA_PRESENT` | Must |
 | EF4 | L'étudiant dépose le lien de son exercice pour une session | Quand j'envoie un lien http(s) valide, alors je reçois `201 { id, statut }` · lien invalide → `400 LIEN_INVALIDE` · second dépôt pour la même session → `409 EXERCICE_DEJA_DEPOSE` · session clôturée → `409 SESSION_CLOTUREE` | Must |
-| EF5 | Le système désigne un relecteur au hasard pour chaque exercice déposé | Quand un exercice est déposé et qu'au moins un autre étudiant est présent à la session, alors une relecture lui est assignée et l'exercice passe `EN_ATTENTE_RELECTURE` · l'auteur n'est jamais tiré · s'il n'y a aucun candidat, l'exercice reste `DEPOSE` | Must |
+| EF5 | Le système désigne **deux relecteurs différents** au hasard pour chaque exercice déposé *(v2)* | Quand un exercice est déposé et qu'au moins deux autres étudiants sont présents, alors deux relectures sont assignées à deux pairs différents et l'exercice passe `EN_ATTENTE_RELECTURE` · l'auteur n'est jamais tiré · un seul candidat → une seule relecture · aucun candidat → l'exercice reste `DEPOSE` | Must |
 | EF6 | Le relecteur voit la liste des exercices qu'il doit relire | Quand je sélectionne mon nom sur l'écran relecteur, alors je vois mes relectures à faire avec le lien de l'exercice, sans le nom de l'auteur | Must |
-| EF7 | Le relecteur rend une note et un commentaire | Quand j'envoie une note entière entre 0 et 20 et un commentaire, alors je reçois `200` et l'exercice passe `RELU` · note hors bornes ou décimale → `400 NOTE_INVALIDE` · relecture de mon propre exercice → `403 AUTO_RELECTURE` · relecture déjà rendue → `409 RELECTURE_DEJA_RENDUE` | Must |
-| EF8 | Le formateur consulte le tableau de sa promotion | Quand je choisis une promotion, alors je vois une ligne par étudiant avec `presences`, `exercicesDeposes`, `moyenne` (fournie par l'API, vide si aucune note) et `relecturesEnAttente` · promotion inconnue → `404 PROMOTION_INCONNUE` | Must |
+| EF7 | Le relecteur rend une note et un commentaire | Quand j'envoie une note entière entre 0 et 20 et un commentaire, alors je reçois `200` ; l'exercice passe `PARTIELLEMENT_RELU` à la première note rendue et `RELU` à la seconde *(v2)* · note hors bornes ou décimale → `400 NOTE_INVALIDE` · relecture de mon propre exercice → `403 AUTO_RELECTURE` · relecture déjà rendue → `409 RELECTURE_DEJA_RENDUE` | Must |
+| EF8 | Le formateur consulte le tableau de sa promotion | Quand je choisis une promotion, alors je vois une ligne par étudiant avec `presences`, `exercicesDeposes`, `moyenne` (fournie par l'API, vide si aucune note), `moyenneProvisoire` (vrai si une note retenue n'a qu'une relecture sur deux, *v2*) et `relecturesEnAttente` · promotion inconnue → `404 PROMOTION_INCONNUE` | Must |
 | EF9 | Le formateur ajoute une présence à la main | Quand j'ajoute un étudiant à une session non clôturée, alors sa présence est créée avec la source `FORMATEUR` et elle est signalée « ajoutée par le formateur » · déjà présent → `409 DEJA_PRESENT` | Should |
 | EF10 | Le formateur clôture une session | Quand je clôture une session, alors aucun dépôt ni présence n'est plus accepté pour elle (`409 SESSION_CLOTUREE` au dépôt) · clôturer deux fois → `409 SESSION_DEJA_CLOTUREE` | Should |
 | EF11 | L'étudiant consulte la note et le commentaire reçus | Quand j'ouvre mes exercices, alors je vois le statut, la note et le commentaire, et jamais le nom du relecteur | Should |
@@ -93,15 +95,17 @@ Le **Système** est un acteur secondaire : il génère le code de présence et t
 | RG7 | Le lien d'un exercice est une URL absolue en `http` ou `https`, de 500 caractères au plus → sinon `400 LIEN_INVALIDE` | Contrat |
 | RG8 | Le dépôt est possible tant que la session n'est pas clôturée, même après la fin du cours → sinon `409 SESSION_CLOTUREE` | Q12 |
 | RG9 | Le lien peut être remplacé tant que la relecture de l'exercice n'est pas rendue | Q13, hypothèse H4 |
-| RG10 | Chaque exercice a exactement un relecteur | Q6 |
+| RG10 | ~~Chaque exercice a exactement un relecteur (Q6)~~ → **v2 : chaque exercice est relu par deux pairs différents** (contrainte UNIQUE (exercice, relecteur)) | Enveloppe étape 3 (remplace Q6) |
 | RG11 | Le relecteur est tiré au hasard parmi les étudiants présents à la session de l'exercice, auteur exclu ; à tirage égal, on privilégie celui qui a le moins de relectures en cours | Q7, H2 |
 | RG12 | Un étudiant ne relit jamais son propre exercice → `403 AUTO_RELECTURE` | Q5 |
 | RG13 | Une note est un entier compris entre 0 et 20 inclus → sinon `400 NOTE_INVALIDE` | Q9 |
 | RG14 | Une relecture rendue est définitive : un second envoi renvoie `409 RELECTURE_DEJA_RENDUE` | Q15, contrat (C1) |
 | RG15 | L'auteur voit la note et le commentaire reçus, jamais l'identité du relecteur | Q8 |
-| RG16 | La moyenne d'un étudiant est la moyenne arithmétique des notes des relectures **rendues** sur ses exercices, arrondie à 2 décimales ; elle vaut `null` s'il n'a reçu aucune note | Q16 |
+| RG16 | *(v2)* La moyenne d'un étudiant est la moyenne arithmétique des **notes retenues** (RG19) de ses exercices, arrondie à 2 décimales ; `null` s'il n'a reçu aucune note ; elle est **provisoire** si au moins une note retenue l'est (RG20) | Q16, enveloppe |
 | RG17 | `relecturesEnAttente` d'un étudiant = nombre de relectures qui lui sont assignées et pas encore rendues | Q11, Q16 |
 | RG18 | Le code d'une session est unique parmi toutes les sessions | ENF7 |
+| RG19 | *(v2)* La note retenue d'un exercice est la moyenne des notes rendues par ses relecteurs | Enveloppe étape 3 |
+| RG20 | *(v2)* Si un seul des deux relecteurs a rendu, sa note est affichée en attendant, marquée **provisoire** (statut `PARTIELLEMENT_RELU`) | Enveloppe étape 3 |
 
 ## 7. Zones d'ombre, hypothèses et contradictions
 
@@ -118,6 +122,8 @@ Le **Système** est un acteur secondaire : il génère le code de présence et t
 | H7 | **Une présence par code doit-elle venir d'un étudiant de la promotion de la session ?** | Aucune réponse | Oui : un étudiant d'une autre promotion reçoit `400 ETUDIANT_HORS_PROMOTION` | Contrôle dans le service |
 | H8 | **Q16 demande « sa présence à chaque session »**, alors que le contrat impose `presences` sous forme d'entier | Q16, contrat | Le contrat prime : `presences` = nombre de sessions où l'étudiant est présent. Le détail par session est exclu de cette version | Section 3, exclusions |
 | H9 | **Q11 veut voir « clairement » un exercice en attente dans le tableau**, alors que le contrat n'a pas de champ pour cela | Q11 | On ajoute au tableau un champ **supplémentaire** `exercicesEnAttente` (exercices déposés sans relecture rendue). Les six champs imposés sont inchangés | Contrat complété |
+| H11 | *(v2)* **Un seul candidat relecteur présent** : on ne peut pas en tirer deux | Aucune réponse | Une seule relecture est assignée ; sa note reste **provisoire** (statut `PARTIELLEMENT_RELU`), visible comme telle par le formateur | RG20 |
+| H12 | *(v2)* **Données existantes** relues une seule fois avant le changement | Aucune réponse | La migration V2 les fait passer `PARTIELLEMENT_RELU` : leur note devient provisoire, rien n'est perdu | Migration V2 |
 | H10 | **Q4 : qu'est-ce qu'« une erreur » ?** | Q4 | Seul un code **inconnu** compte comme une erreur. Un code expiré ou un « déjà présent » ne compte pas : l'étudiant ne devinait pas | RG5 |
 
 **Contradictions relevées :**
@@ -125,6 +131,7 @@ Le **Système** est un acteur secondaire : il génère le code de présence et t
 | # | Réponses en conflit | Ce que j'ai choisi | Pourquoi |
 |---|---|---|---|
 | C1 | **Q10** (« le relecteur peut corriger sa note tant que la session n'est pas clôturée ») contre **Q15** (« une fois validée, c'est fini, il ne peut plus y revenir ») | **Q15 : une relecture rendue est définitive** (RG14) | Le contrat imposé tranche : `POST /api/relectures/{id}` doit renvoyer `409 RELECTURE_DEJA_RENDUE` sur un second envoi, ce qui n'a de sens que si la note est définitive. Le contrat étant non négociable (B2), Q10 ne peut pas être satisfaite sans le violer. Q15 donne en plus une raison métier (« plus honnête pour tout le monde »), alors que Q10 n'en donne pas |
+| C3 | **Q6** (« un seul relecteur ») contre la **demande du client à l'étape 3** (« deux pairs différents, moyenne, note provisoire ») | La demande de l'étape 3 : RG10 modifiée, RG19 et RG20 ajoutées | C'est la décision la plus récente du client, justifiée par un problème réel : un relecteur défaillant laissait l'étudiant sans note (Q11) |
 | C2 | **Q13** (« remplacer le lien tant que personne n'a commencé à relire ») contre la **note définitive (Q15)**, tension mineure : si l'auteur change le lien après la relecture, la note porterait sur un autre travail | Remplacement autorisé uniquement avant la relecture rendue (RG9, H4) | Cela préserve le sens de Q13 sans rendre Q15 incohérente |
 
 **Réponses jugées sans impact :** Q1 ne demande aucun développement (il ne fait qu'exclure l'authentification) et Q8 n'impose qu'une restriction d'affichage.
@@ -187,3 +194,4 @@ Le **Système** est un acteur secondaire : il génère le code de présence et t
 | Version | Quand | Ce qui a changé et pourquoi |
 |---|---|---|
 | 1 | 25/09/2026 | Version initiale |
+| 2 | 25/09/2026 | **Conséquence du changement de l'étape 3 (deux relecteurs)** : RG10 modifiée (Q6 remplacée), RG16 modifiée, RG19 et RG20 ajoutées, EF5/EF7/EF8 mis à jour, H11, H12 et C3 ajoutées, sacrifice de EF12 et EF13 écrit en section 3 |

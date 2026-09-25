@@ -19,9 +19,9 @@ flowchart LR
         UC5(["UC5 · Choisir son nom dans la liste<br/>EF2"])
         UC6(["UC6 · Marquer sa présence avec le code<br/>EF3 · POST /api/presences"])
         UC7(["UC7 · Déposer le lien de son exercice<br/>EF4 · POST /api/exercices"])
-        UC8(["UC8 · Remplacer le lien de son exercice<br/>EF13"])
+        UC8(["UC8 · Remplacer le lien de son exercice<br/>EF13 · hors périmètre v2"])
         UC9(["UC9 · Consulter la note reçue<br/>EF11"])
-        UC10(["UC10 · Désigner un relecteur au hasard<br/>EF5"])
+        UC10(["UC10 · Désigner deux relecteurs au hasard (v2)<br/>EF5"])
         UC11(["UC11 · Voir ses relectures à faire<br/>EF6"])
         UC12(["UC12 · Rendre une note et un commentaire<br/>EF7 · POST /api/relectures/{id}"])
     end
@@ -56,8 +56,8 @@ flowchart LR
 | UC5 | Must | — (Q1) |
 | UC6 | Must | RG1, RG2, RG3, RG5 |
 | UC7 | Must | RG6, RG7, RG8 |
-| UC8 | Could | RG9 |
+| UC8 | Could → **sacrifié en v2** | RG9 |
 | UC9 | Should | RG15 |
-| UC10 | Must | RG10, RG11, RG12 |
+| UC10 | Must | RG10 (v2 : deux relecteurs), RG11, RG12 |
 | UC11 | Must | RG15 |
 | UC12 | Must | RG12, RG13, RG14 |
