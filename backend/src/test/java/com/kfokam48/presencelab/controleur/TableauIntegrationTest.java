@@ -47,6 +47,7 @@ class TableauIntegrationTest {
         Promotion promo = promotions.save(new Promotion("Promo tableau"));
         Etudiant alice = etudiants.save(new Etudiant("Alice", promo));
         Etudiant bruno = etudiants.save(new Etudiant("Bruno", promo));
+        Etudiant carine = etudiants.save(new Etudiant("Carine", promo));
         SessionCours s1 = sessions.save(new SessionCours("S1", promo, "TAB001", Instant.now()));
         SessionCours s2 = sessions.save(new SessionCours("S2", promo, "TAB002", Instant.now()));
         presences.save(new Presence(s1, alice, SourcePresence.ETUDIANT, Instant.now()));
@@ -55,26 +56,33 @@ class TableauIntegrationTest {
 
         Exercice e1 = exercices.save(new Exercice(s1, alice, "https://x.cm/1", Instant.now()));
         Exercice e2 = exercices.save(new Exercice(s2, alice, "https://x.cm/2", Instant.now()));
-        Relecture r1 = relectures.save(new Relecture(e1, bruno, Instant.now()));
-        r1.rendre(12, "ok", Instant.now());
-        e1.marquerRelu();
-        Relecture r2 = relectures.save(new Relecture(e2, bruno, Instant.now()));
-        r2.rendre(15, "bien", Instant.now());
-        e2.marquerRelu();
+        // e1 : deux notes (12 et 14) → note retenue 13, définitive (RG19)
+        relectures.save(new Relecture(e1, bruno, Instant.now())).rendre(12, "ok", Instant.now());
+        relectures.save(new Relecture(e1, carine, Instant.now())).rendre(14, "bien", Instant.now());
+        e1.enregistrerNotesRendues(2);
+        // e2 : une seule note sur deux (15) → note provisoire (RG20)
+        relectures.save(new Relecture(e2, bruno, Instant.now())).rendre(15, "bien", Instant.now());
+        relectures.save(new Relecture(e2, carine, Instant.now()));
+        e2.enregistrerNotesRendues(1);
         Exercice e3 = exercices.save(new Exercice(s1, bruno, "https://x.cm/3", Instant.now()));
         e3.mettreEnAttenteDeRelecture();
         relectures.save(new Relecture(e3, alice, Instant.now())); // Alice doit encore relire Bruno
 
         mvc.perform(get("/api/tableau").param("promotionId", promo.getId().toString()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$.length()").value(3))
                 .andExpect(jsonPath("$[0].nom").value("Alice"))
                 .andExpect(jsonPath("$[0].presences").value(2))
                 .andExpect(jsonPath("$[0].exercicesDeposes").value(2))
-                .andExpect(jsonPath("$[0].moyenne").value(13.5))
+                .andExpect(jsonPath("$[0].moyenne").value(14.0))            // (13 + 15) / 2
+                .andExpect(jsonPath("$[0].moyenneProvisoire").value(true))   // e2 n'a qu'une note
+                .andExpect(jsonPath("$[0].exercicesEnAttente").value(1))
                 .andExpect(jsonPath("$[0].relecturesEnAttente").value(1))
                 .andExpect(jsonPath("$[1].nom").value("Bruno"))
                 .andExpect(jsonPath("$[1].moyenne").value(nullValue()))
+                .andExpect(jsonPath("$[1].moyenneProvisoire").value(false))
+                .andExpect(jsonPath("$[2].nom").value("Carine"))
+                .andExpect(jsonPath("$[2].relecturesEnAttente").value(1))
                 .andExpect(jsonPath("$[1].exercicesEnAttente").value(1));
     }
 

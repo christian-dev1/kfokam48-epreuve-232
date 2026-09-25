@@ -62,9 +62,16 @@ public class Exercice {
         this.statut = StatutExercice.EN_ATTENTE_RELECTURE;
     }
 
-    /** D4 : EN_ATTENTE_RELECTURE → RELU quand la relecture est rendue. */
-    public void marquerRelu() {
-        this.statut = StatutExercice.RELU;
+    /** Nombre de relecteurs par exercice (RG10 v2, changement de l'étape 3). */
+    public static final int NB_RELECTEURS = 2;
+
+    /** D4 v2 : 1 note rendue → PARTIELLEMENT_RELU (provisoire, RG20) ; 2 notes → RELU (RG19). */
+    public void enregistrerNotesRendues(long nombreDeNotesRendues) {
+        if (nombreDeNotesRendues >= NB_RELECTEURS) {
+            this.statut = StatutExercice.RELU;
+        } else if (nombreDeNotesRendues > 0) {
+            this.statut = StatutExercice.PARTIELLEMENT_RELU;
+        }
     }
 
     public Long getId() {

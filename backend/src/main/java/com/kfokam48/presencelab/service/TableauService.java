@@ -1,5 +1,6 @@
 package com.kfokam48.presencelab.service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.kfokam48.presencelab.dto.LigneTableauDto;
+import com.kfokam48.presencelab.entite.Exercice;
 import com.kfokam48.presencelab.entite.StatutExercice;
 import com.kfokam48.presencelab.repository.EtudiantRepository;
 import com.kfokam48.presencelab.repository.ExerciceRepository;
@@ -44,9 +46,14 @@ public class TableauService {
         Map<Long, Long> nbExercices = versMap(exercices.compterParEtudiant(promotionId));
         Map<Long, Long> nbNonRelus = versMap(exercices.compterNonRelusParEtudiant(promotionId, StatutExercice.RELU));
         Map<Long, Long> nbAFaire = versMap(relectures.enAttenteParRelecteur(promotionId));
-        Map<Long, Double> moyennes = new HashMap<>();
-        for (Object[] ligne : relectures.moyenneParAuteur(promotionId)) {
-            moyennes.put(((Number) ligne[0]).longValue(), arrondir(((Number) ligne[1]).doubleValue()));
+        // RG19 : note retenue d'un exercice = moyenne de ses notes rendues ; provisoire si < 2 notes (RG20)
+        Map<Long, List<NoteRetenue>> notesParAuteur = new HashMap<>();
+        for (Object[] ligne : relectures.notesParExercice(promotionId)) {
+            long auteurId = ((Number) ligne[0]).longValue();
+            double note = ((Number) ligne[2]).doubleValue();
+            long nombre = ((Number) ligne[3]).longValue();
+            notesParAuteur.computeIfAbsent(auteurId, k -> new ArrayList<>())
+                    .add(new NoteRetenue(note, nombre < Exercice.NB_RELECTEURS));
         }
 
         return etudiants.findByPromotionIdOrderByNomAsc(promotionId).stream()
@@ -55,10 +62,28 @@ public class TableauService {
                         e.getNom(),
                         nbPresences.getOrDefault(e.getId(), 0L).intValue(),
                         nbExercices.getOrDefault(e.getId(), 0L).intValue(),
-                        moyennes.get(e.getId()),
+                        moyenne(notesParAuteur.get(e.getId())),
                         nbAFaire.getOrDefault(e.getId(), 0L).intValue(),
-                        nbNonRelus.getOrDefault(e.getId(), 0L).intValue()))
+                        nbNonRelus.getOrDefault(e.getId(), 0L).intValue(),
+                        provisoire(notesParAuteur.get(e.getId()))))
                 .toList();
+    }
+
+    /** Note retenue d'un exercice (RG19) et son caractère provisoire (RG20). */
+    record NoteRetenue(double valeur, boolean provisoire) {
+    }
+
+    /** RG16 v2 : moyenne des notes retenues, arrondie ; null sans aucune note. */
+    static Double moyenne(List<NoteRetenue> notes) {
+        if (notes == null || notes.isEmpty()) {
+            return null;
+        }
+        return arrondir(notes.stream().mapToDouble(NoteRetenue::valeur).average().orElse(0));
+    }
+
+    /** RG20 : la moyenne est provisoire si au moins une note retenue l'est. */
+    static boolean provisoire(List<NoteRetenue> notes) {
+        return notes != null && notes.stream().anyMatch(NoteRetenue::provisoire);
     }
 
     /** RG16 : arrondi à 2 décimales. */

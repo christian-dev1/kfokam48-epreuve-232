@@ -14,7 +14,7 @@ import jakarta.persistence.Table;
 
 /**
  * Relecture d'un exercice par un pair. Le relecteur est un étudiant (CDC §2).
- * RG10 : un seul relecteur par exercice (contrainte uk_relecture_exercice).
+ * RG10 v2 : deux relecteurs différents par exercice (contrainte uk_relecture_exercice_relecteur).
  * RG14 : une fois rendue (rendueAt renseigné), la relecture est définitive.
  */
 @Entity

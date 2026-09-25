@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Contrat — PresenceLab (Épreuve finale KFOKAM48)
-  version: "1.1"
+  version: "1.2"
   description: |
     Les cinq opérations imposées (tag « impose ») existent EXACTEMENT ainsi :
     mêmes chemins, mêmes verbes, mêmes codes de statut, même format d'erreur.
@@ -14,6 +14,8 @@ info:
     Toutes les erreurs, sans exception (y compris 404 sur une route inconnue
     et 500), respectent le schéma Erreur.
     Toutes les dates sont en UTC, au format ISO 8601.
+    v1.2 (étape 3, changement « deux relecteurs ») : statut PARTIELLEMENT_RELU,
+    champ moyenneProvisoire dans le tableau, codes CONFLIT et METHODE_NON_AUTORISEE.
 
 servers:
   - url: http://localhost:8080
@@ -153,7 +155,7 @@ paths:
   /api/exercices:
     post:
       tags: [impose]
-      summary: Un étudiant dépose le lien de son exercice (EF4) — un relecteur est tiré au sort (EF5)
+      summary: Un étudiant dépose le lien de son exercice (EF4) — deux relecteurs sont tirés au sort (EF5, v1.2)
       requestBody:
         required: true
         content:
@@ -295,7 +297,8 @@ paths:
       tags: [impose]
       summary: Le tableau récapitulatif du formateur (EF8)
       description: |
-        moyenne : moyenne des notes rendues sur les exercices de l'étudiant,
+        moyenne (v1.2) : moyenne des notes RETENUES des exercices de l'étudiant
+        (note retenue = moyenne des notes rendues par ses deux relecteurs, RG19),
         arrondie à 2 décimales, null si aucune note (RG16). Calculée par l'API,
         jamais par le frontend.
         exercicesEnAttente est un champ AJOUTÉ (H9, Q11).
@@ -322,7 +325,8 @@ paths:
                     exercicesDeposes: { type: integer }
                     moyenne: { type: number, nullable: true }
                     relecturesEnAttente: { type: integer, description: "Relectures assignées à cet étudiant et non rendues (RG17)" }
-                    exercicesEnAttente: { type: integer, description: "Ajout (H9) — exercices de l'étudiant sans relecture rendue" }
+                    exercicesEnAttente: { type: integer, description: "Ajout (H9) — exercices de l'étudiant pas encore RELU" }
+                    moyenneProvisoire: { type: boolean, description: "Ajout v1.2 (RG20) — vrai si une note retenue n'a qu'une relecture sur deux ; faux si aucune note" }
         "400": { $ref: "#/components/responses/Erreur" }   # PARAMETRE_MANQUANT (ajout)
         "404": { $ref: "#/components/responses/Erreur" }   # PROMOTION_INCONNUE
 
@@ -388,7 +392,7 @@ components:
 
     StatutExercice:
       type: string
-      enum: [DEPOSE, EN_ATTENTE_RELECTURE, RELU]
+      enum: [DEPOSE, EN_ATTENTE_RELECTURE, PARTIELLEMENT_RELU, RELU]
       description: Voir docs/diagrammes/D4_etats_exercice.md
 
     Session:
@@ -451,7 +455,8 @@ components:
           403 AUTO_RELECTURE · RELECTEUR_NON_ASSIGNE · PAS_AUTEUR
           404 PROMOTION_INCONNUE · SESSION_INCONNUE · ETUDIANT_INCONNU
               EXERCICE_INCONNU · RELECTURE_INCONNUE · RESSOURCE_INTROUVABLE
-          409 DEJA_PRESENT · EXERCICE_DEJA_DEPOSE · SESSION_CLOTUREE
+          405 METHODE_NON_AUTORISEE
+          409 DEJA_PRESENT · EXERCICE_DEJA_DEPOSE · SESSION_CLOTUREE · CONFLIT (contrainte d'unicité)
               SESSION_DEJA_CLOTUREE · RELECTURE_DEJA_RENDUE · EXERCICE_DEJA_RELU
           410 CODE_EXPIRE
           429 TROP_DE_TENTATIVES

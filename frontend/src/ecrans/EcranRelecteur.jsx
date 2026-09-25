@@ -54,7 +54,7 @@ function Relecture({ relecture, relecteurId, onRendue }) {
         {relecture.rendue ? <span className="badge">rendue</span> : <span className="badge attente">à faire</span>}
       </p>
       {relecture.rendue ? (
-        <p>Note envoyée : <strong>{relecture.note}/20</strong> — « {relecture.commentaire} » (définitive)</p>
+        <p>Note envoyée : <strong>{relecture.note}/20</strong> — « {relecture.commentaire} » (définitive ; la note retenue sera la moyenne avec l'autre relecteur)</p>
       ) : (
         <form onSubmit={envoyer}>
           <label htmlFor={`note-${relecture.id}`}>Note sur 20</label>

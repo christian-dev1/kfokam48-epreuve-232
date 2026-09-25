@@ -48,6 +48,7 @@ class RelectureIntegrationTest {
 
     private Etudiant alice;
     private Etudiant bruno;
+    private Etudiant carine;
     private Exercice exercice;
     private Relecture relecture;
 
@@ -56,6 +57,7 @@ class RelectureIntegrationTest {
         Promotion promotion = promotions.save(new Promotion("Promo test relecture"));
         alice = etudiants.save(new Etudiant("Alice", promotion));
         bruno = etudiants.save(new Etudiant("Bruno", promotion));
+        carine = etudiants.save(new Etudiant("Carine", promotion));
         SessionCours session = sessions.save(new SessionCours("Séance test", promotion, "TST001", Instant.now()));
         exercice = exercices.save(new Exercice(session, alice, "https://github.com/alice/tp", Instant.now()));
         exercice.mettreEnAttenteDeRelecture();
@@ -67,11 +69,23 @@ class RelectureIntegrationTest {
     }
 
     @Test
-    void EF7_uneRelectureValideRenvoie200EtLExercicePasseRelu() throws Exception {
+    void EF7_RG20_uneSeuleNoteRendueLaisseLExercicePartiellementRelu() throws Exception {
         rendre(relecture.getId(), "{\"note\": 15, \"commentaire\": \"Bon travail\", \"relecteurId\": " + bruno.getId() + "}")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.note").value(15))
                 .andExpect(jsonPath("$.rendue").value(true));
+
+        assertThat(exercices.findById(exercice.getId()).orElseThrow().getStatut())
+                .isEqualTo(StatutExercice.PARTIELLEMENT_RELU);
+    }
+
+    @Test
+    void RG19_laSecondeNoteRendueFaitPasserLExerciceRelu() throws Exception {
+        Relecture seconde = relectures.save(new Relecture(exercice, carine, Instant.now()));
+        rendre(relecture.getId(), "{\"note\": 12, \"commentaire\": \"Correct\"}").andExpect(status().isOk());
+
+        rendre(seconde.getId(), "{\"note\": 16, \"commentaire\": \"Très bien\", \"relecteurId\": " + carine.getId() + "}")
+                .andExpect(status().isOk());
 
         assertThat(exercices.findById(exercice.getId()).orElseThrow().getStatut()).isEqualTo(StatutExercice.RELU);
     }
