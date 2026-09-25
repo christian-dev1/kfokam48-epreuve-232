@@ -15,7 +15,8 @@ export default function EcranFormateur() {
       <section>
         <ChoixPromotion valeur={promotionId} onChange={setPromotionId} />
       </section>
-      {promotionId && <Sessions key={promotionId} promotionId={promotionId} />}
+      {promotionId && <Sessions key={`s-${promotionId}`} promotionId={promotionId} />}
+      {promotionId && <Tableau key={`t-${promotionId}`} promotionId={promotionId} />}
     </>
   )
 }
@@ -80,5 +81,51 @@ function Sessions({ promotionId }) {
         )}
       </section>
     </>
+  )
+}
+
+/** EF8 : la moyenne affichée est celle de l'API, jamais recalculée ici (F3). */
+function Tableau({ promotionId }) {
+  const tableau = useRequete(`tableau-${promotionId}`, () => api.tableau(promotionId))
+
+  return (
+    <section>
+      <h3>
+        Tableau de la promotion{' '}
+        <button onClick={tableau.recharger} disabled={tableau.chargement}>Actualiser</button>
+      </h3>
+      {tableau.chargement && <Chargement />}
+      <MessageErreur erreur={tableau.erreur} />
+      {tableau.donnees?.length === 0 && <p className="vide">Aucun étudiant dans cette promotion.</p>}
+      {tableau.donnees?.length > 0 && (
+        <div className="table-defilante">
+          <table>
+            <thead>
+              <tr>
+                <th>Étudiant</th>
+                <th>Présences</th>
+                <th>Exercices déposés</th>
+                <th>Moyenne reçue</th>
+                <th>Relectures à rendre</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tableau.donnees.map((l) => (
+                <tr key={l.etudiantId}>
+                  <td>{l.nom}</td>
+                  <td>{l.presences}</td>
+                  <td>
+                    {l.exercicesDeposes}
+                    {l.exercicesEnAttente > 0 && <> <span className="badge attente">{l.exercicesEnAttente} en attente de relecture</span></>}
+                  </td>
+                  <td>{l.moyenne ?? '—'}</td>
+                  <td>{l.relecturesEnAttente > 0 ? <span className="badge attente">{l.relecturesEnAttente}</span> : 0}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   )
 }

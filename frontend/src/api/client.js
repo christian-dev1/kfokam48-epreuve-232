@@ -59,4 +59,7 @@ export const api = {
   relectures: (relecteurId) => requete(`/api/relectures?relecteurId=${relecteurId}`),
   rendreRelecture: (id, note, commentaire, relecteurId) =>
     requete(`/api/relectures/${id}`, { methode: 'POST', corps: { note, commentaire, relecteurId } }),
+
+  // Tableau du formateur (EF8)
+  tableau: (promotionId) => requete(`/api/tableau?promotionId=${promotionId}`),
 }
