@@ -1,4 +1,7 @@
 import { useState } from 'react'
+import EcranEtudiant from './ecrans/EcranEtudiant'
+import EcranFormateur from './ecrans/EcranFormateur'
+import EcranRelecteur from './ecrans/EcranRelecteur'
 
 // F2 — Trois écrans : formateur, étudiant, relecteur. Pas d'authentification (Q1).
 const ECRANS = [
@@ -8,7 +11,9 @@ const ECRANS = [
 ]
 
 function Ecran({ id }) {
-  return <p className="vide">Écran « {id} » : en cours de construction.</p>
+  if (id === 'formateur') return <EcranFormateur />
+  if (id === 'relecteur') return <EcranRelecteur />
+  return <EcranEtudiant />
 }
 
 export default function App() {

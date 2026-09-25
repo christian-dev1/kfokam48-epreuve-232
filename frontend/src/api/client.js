@@ -39,4 +39,8 @@ export async function requete(chemin, { methode = 'GET', corps } = {}) {
   return donnees
 }
 
-export const api = {}
+export const api = {
+  // Référentiel (EF2, H1)
+  promotions: () => requete('/api/promotions'),
+  etudiants: (promotionId) => requete(`/api/promotions/${promotionId}/etudiants`),
+}
