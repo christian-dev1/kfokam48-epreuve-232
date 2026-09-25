@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.Locale;
 import java.util.Objects;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,8 +64,15 @@ public class PresenceService {
         if (presences.existsBySessionIdAndEtudiantId(session.getId(), etudiant.getId())) {
             throw new DejaPresentException();
         }
-        Presence presence = presences.save(new Presence(session, etudiant, SourcePresence.ETUDIANT, maintenant));
-        return PresenceDto.depuis(presence);
+        // Bug #23 : deux requêtes simultanées peuvent passer le contrôle ci-dessus ensemble.
+        // L'écriture est forcée tout de suite (saveAndFlush) et la contrainte UNIQUE de la base
+        // (uk_presence_session_etudiant) tranche : le perdant reçoit un 409 DEJA_PRESENT clair.
+        try {
+            Presence presence = presences.saveAndFlush(new Presence(session, etudiant, SourcePresence.ETUDIANT, maintenant));
+            return PresenceDto.depuis(presence);
+        } catch (DataIntegrityViolationException doublon) {
+            throw new DejaPresentException();
+        }
     }
 
     /** Saisie sur téléphone : espaces et minuscules tolérés. */
