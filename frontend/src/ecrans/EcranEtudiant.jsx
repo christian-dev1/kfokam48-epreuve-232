@@ -89,7 +89,7 @@ function DeposerExercice({ etudiant, promotionId }) {
         </form>
       )}
       <MessageErreur erreur={depot.erreur} />
-      <MessageSucces>{depot.resultat && `Exercice déposé — statut : ${depot.resultat.statut}.`}</MessageSucces>
+      <MessageSucces>{depot.resultat && `Exercice déposé — statut : ${depot.resultat.statut} (deux pairs vont le relire).`}</MessageSucces>
     </section>
   )
 }

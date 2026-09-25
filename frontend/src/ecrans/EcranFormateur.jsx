@@ -84,7 +84,7 @@ function Sessions({ promotionId }) {
   )
 }
 
-/** EF8 : la moyenne affichée est celle de l'API, jamais recalculée ici (F3). */
+/** EF8 : la moyenne affichée est celle de l'API, jamais recalculée ici (F3) ; « provisoire » vient aussi de l'API (RG20). */
 function Tableau({ promotionId }) {
   const tableau = useRequete(`tableau-${promotionId}`, () => api.tableau(promotionId))
 
@@ -118,7 +118,10 @@ function Tableau({ promotionId }) {
                     {l.exercicesDeposes}
                     {l.exercicesEnAttente > 0 && <> <span className="badge attente">{l.exercicesEnAttente} en attente de relecture</span></>}
                   </td>
-                  <td>{l.moyenne ?? '—'}</td>
+                  <td>
+                    {l.moyenne ?? '—'}
+                    {l.moyenneProvisoire && <> <span className="badge attente">provisoire</span></>}
+                  </td>
                   <td>{l.relecturesEnAttente > 0 ? <span className="badge attente">{l.relecturesEnAttente}</span> : 0}</td>
                 </tr>
               ))}
