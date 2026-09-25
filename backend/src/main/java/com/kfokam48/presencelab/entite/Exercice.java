@@ -57,6 +57,16 @@ public class Exercice {
         this.statut = StatutExercice.DEPOSE;
     }
 
+    /** D4 : DEPOSE → EN_ATTENTE_RELECTURE quand un relecteur est tiré au sort. */
+    public void mettreEnAttenteDeRelecture() {
+        this.statut = StatutExercice.EN_ATTENTE_RELECTURE;
+    }
+
+    /** D4 : EN_ATTENTE_RELECTURE → RELU quand la relecture est rendue. */
+    public void marquerRelu() {
+        this.statut = StatutExercice.RELU;
+    }
+
     public Long getId() {
         return id;
     }
