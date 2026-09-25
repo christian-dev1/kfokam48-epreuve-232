@@ -52,7 +52,7 @@ erDiagram
         bigint id PK
         bigint exercice_id FK "NOT NULL, UK (RG10)"
         bigint relecteur_id FK "NOT NULL, jamais l'auteur (RG12)"
-        smallint note "NULL tant que non rendue, CHECK 0..20 (RG13)"
+        integer note "NULL tant que non rendue, CHECK 0..20 (RG13)"
         varchar_1000 commentaire "NULL tant que non rendue"
         timestamptz assignee_at "NOT NULL"
         timestamptz rendue_at "NULL tant que non rendue (RG14)"
@@ -64,12 +64,13 @@ erDiagram
 | Contrainte | Table | Règle |
 |---|---|---|
 | `uk_promotion_nom` UNIQUE (nom) | promotion | — |
+| Clés étrangères `fk_*` + index sur `etudiant.promotion_id`, `session_cours.promotion_id`, `relecture.relecteur_id` | toutes | ENF2 |
 | `uk_session_code` UNIQUE (code) | session_cours | RG18 |
 | `uk_presence_session_etudiant` UNIQUE (session_id, etudiant_id) | presence | RG3 |
 | `ck_presence_source` CHECK source IN ('ETUDIANT','FORMATEUR') | presence | RG4 |
 | `uk_exercice_session_etudiant` UNIQUE (session_id, etudiant_id) | exercice | RG6 |
 | `ck_exercice_statut` CHECK statut IN ('DEPOSE','EN_ATTENTE_RELECTURE','RELU') | exercice | D4 |
 | `uk_relecture_exercice` UNIQUE (exercice_id) | relecture | RG10 |
-| `ck_relecture_note` CHECK note BETWEEN 0 AND 20 | relecture | RG13 |
+| `ck_relecture_note` CHECK note IS NULL OR note BETWEEN 0 AND 20 | relecture | RG13 |
 
 Le **relecteur** n'a pas de table propre : c'est un `ETUDIANT` référencé par `relecture.relecteur_id` (cahier des charges, section 2). Le **formateur** n'est pas stocké, puisqu'il n'y a pas d'authentification (Q1, section 3).
