@@ -20,7 +20,7 @@ import com.kfokam48.presencelab.repository.EtudiantRepository;
 import com.kfokam48.presencelab.repository.ExerciceRepository;
 import com.kfokam48.presencelab.repository.SessionCoursRepository;
 
-/** EF4 — Dépôt du lien d'un exercice. */
+/** EF4 — Dépôt du lien d'un exercice, suivi du tirage du relecteur (EF5). */
 @Service
 @Transactional
 public class ExerciceService {
@@ -30,13 +30,15 @@ public class ExerciceService {
     private final SessionCoursRepository sessions;
     private final EtudiantRepository etudiants;
     private final ExerciceRepository exercices;
+    private final AssignationRelecteur assignation;
     private final Clock horloge;
 
     public ExerciceService(SessionCoursRepository sessions, EtudiantRepository etudiants,
-                           ExerciceRepository exercices, Clock horloge) {
+                           ExerciceRepository exercices, AssignationRelecteur assignation, Clock horloge) {
         this.sessions = sessions;
         this.etudiants = etudiants;
         this.exercices = exercices;
+        this.assignation = assignation;
         this.horloge = horloge;
     }
 
@@ -59,6 +61,7 @@ public class ExerciceService {
             throw MetierException.conflit("EXERCICE_DEJA_DEPOSE", "Tu as déjà déposé un exercice pour cette session.");
         }
         Exercice exercice = exercices.save(new Exercice(session, auteur, lien, Instant.now(horloge)));
+        assignation.assigner(exercice); // EF5, dans la même transaction que le dépôt
         return new ExerciceDeposeDto(exercice.getId(), exercice.getStatut());
     }
 
