@@ -34,3 +34,13 @@
 **IA :** je lui ai fait traduire le signalement, proposer le test de reproduction, la migration V2 et la répartition des commits. Vérifications : le test a bien été vu **en échec** avant le correctif (`/tmp/bug-rouge.log`) puis au vert ; la migration V2 a été rejouée sur une base déjà remplie avec les anciennes données de démo (aucune ligne perdue, statuts recalculés) et sur une base vide ; un doublon (exercice, relecteur) est bien refusé ; chaque code HTTP du contrat 1.2 a été comparé au code renvoyé.
 
 **Ce que j'ai sorti du périmètre pour absorber le changement, et pourquoi :** **EF12** (blocage deux minutes après cinq codes erronés, Should, #12) et **EF13** (remplacement du lien, Could, #13). Le changement « deux relecteurs » est un Must qui touche la base, le contrat et le front ; ces deux exigences ne concernent ni la note ni le tableau, qui sont la priorité du client. Les issues sont fermées en « not planned », avec un commentaire. EF9, EF10 et EF11 restent au backlog (Should), à traiter s'il reste du temps.
+
+---
+
+## Étape 4 — Version finale
+
+**Fait :** CHANGELOG 1.0.0 cohérent avec les PR, README final (démarrage Docker ou 3 commandes, données de démo, parcours conseillé). Vérification depuis un clone vierge : `./mvnw test` vert (35 tests), `npm run build` OK, `docker compose up --build` démarre base, API et front, `verifier_api.sh` 21/21 OK. Backlog trié : #12 et #13 fermées en « not planned » (sacrifice) ; #9, #10 et #11 (Should) restent ouvertes pour une version suivante.
+
+**Bloqué :** environ 20 min, surtout pour libérer les ports 8080 et 5173, occupés par d'autres processus locaux.
+
+**IA :** je lui ai fait rédiger le CHANGELOG et le README. Vérifié en comparant chaque ligne du CHANGELOG aux PR fusionnées, et en exécutant les commandes du README depuis un clone vierge.
